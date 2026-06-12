@@ -1,0 +1,9 @@
+yfinance
+pandas
+pandas-ta
+scikit-learn
+numpy
+requests
+google-generativeai
+python-dotenv
+joblib
