@@ -1,0 +1,19 @@
+# Lingkungan Virtual Python (Windows)
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
+
+# Kredensial dan Keamanan
+.env
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# File Model AI Binary
+*.joblib
+
+# File Data dan Jurnal Lokal
+*.csv
