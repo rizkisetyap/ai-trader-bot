@@ -1,8 +1,8 @@
-yfinance
+numpy
 pandas
+yfinance
 pandas-ta
 scikit-learn
-numpy
 requests
 google-generativeai
 python-dotenv
