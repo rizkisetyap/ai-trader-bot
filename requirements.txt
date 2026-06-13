@@ -1,7 +1,7 @@
 numpy
 pandas
 yfinance
-git+https://github.com/twopirllc/pandas-ta.git@development
+pandas-ta
 scikit-learn
 requests
 google-generativeai
