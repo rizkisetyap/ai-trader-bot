@@ -1,12 +1,12 @@
-from dotenv import load_dotenv
-import yfinance as yf
-import pandas as pd
-import pandas_ta as ta
-import numpy as np
 import os
 import joblib
 import requests
-import google.generativeai as genai  # MODUL BARU: AI Pembaca Teks (Otak Kanan)
+import numpy as np
+import pandas as pd
+import yfinance as yf
+import pandas_ta as ta
+import google.generativeai as genai
+from dotenv import load_dotenv
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -24,6 +24,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # Validasi keamanan sederhana
 if not all([TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, GEMINI_API_KEY]):
     raise ValueError("Kredensial API tidak lengkap! Cek file .env Anda.")
+
 # Setup Gemini AI
 genai.configure(api_key=GEMINI_API_KEY)
 model_ai_teks = genai.GenerativeModel('gemini-1.5-flash') # Model yang cepat untuk baca teks
@@ -113,7 +114,13 @@ for kode in daftar_saham:
     df['BB_Lower'] = bbands.iloc[:, 0]
     df['BB_Upper'] = bbands.iloc[:, 2]
 
+    # Target: 1 jika besok naik, 0 jika turun
     df['Target'] = np.where(df['Close'].shift(-1) > df['Close'], 1, 0)
+    
+    # [PERBAIKAN BUG]: Ambil data hari ini SEBELUM NaN dihapus
+    data_hari_ini = df.iloc[-1:].copy()
+    
+    # Bersihkan data (menghapus baris yang memiliki NaN akibat pergeseran target atau indikator)
     df = df.dropna()
 
     fitur = ['SMA_20', 'SMA_50', 'RSI_14', 'MACD', 'MACD_Signal', 'BB_Lower', 'BB_Upper', 'Open', 'Close', 'Volume']
@@ -129,8 +136,7 @@ for kode in daftar_saham:
         model.fit(X_train, y_train)
         joblib.dump(model, nama_file_memori)
 
-    # Prediksi Angka
-    data_hari_ini = df.iloc[-1:]
+    # Prediksi Angka menggunakan data hari ini yang sudah diamankan
     prediksi_besok = model.predict(data_hari_ini[fitur])
     probabilitas = model.predict_proba(data_hari_ini[fitur])[0]
     
