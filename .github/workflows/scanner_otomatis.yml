@@ -1,40 +1,53 @@
+# ─────────────────────────────────────────────────────────────
+# GitHub Actions Workflow — AI Stock Scanner
+# Jadwal: Senin–Jumat pukul 16:30 WIB = 09:30 UTC
+# ─────────────────────────────────────────────────────────────
 name: AI Stock Scanner Daily Run
 
 on:
   schedule:
-    # Menjalankan otomatis setiap hari Senin - Jumat pukul 09:30 UTC (16:30 WIB)
-    - cron: '30 9 * * 0,6' # Testing  a week, every Sunday at 9:30 UTC (16:30 WIB)
-    # - cron: '30 9 * * 1-5' // defaultnya menggunakan UTC, jadi 9:30 UTC = 16:30 WIB
+    # Senin–Jumat 09:30 UTC = 16:30 WIB
+    # Format: menit jam hari bulan hari-minggu
+    # 0 = Minggu, 1 = Senin, ..., 5 = Jumat, 6 = Sabtu
+    - cron: '30 9 * * 1-5'
+
+  # Tombol "Run workflow" manual di GitHub Actions UI
   workflow_dispatch:
-    # Fitur ini opsional, agar Anda bisa menekan tombol "Run" manual dari web GitHub
 
 jobs:
   run-bot-saham:
+    name: Analisis Saham Perbankan IDX
     runs-on: ubuntu-latest
+
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # Menghilangkan warning Node.js
+      # Menghilangkan warning Node.js dari actions pihak ketiga
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # Paksa output Python tidak di-buffer (log tampil real-time di GH)
+      PYTHONUNBUFFERED: "1"
 
     steps:
-    # 1. Mengunduh source code dari repositori ke server GitHub
-    - name: Checkout Repository Code
-      uses: actions/checkout@v4
+      # ── Step 1: Ambil source code ──────────────────────────
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # 2. Menyiapkan lingkungan Python di server
-    - name: Setup Python environment
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      # ── Step 2: Siapkan Python 3.12 ───────────────────────
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          # Cache pip agar install lebih cepat pada run berikutnya
+          cache: 'pip'
 
-    # 3. Menginstal semua library yang terdaftar di requirements.txt
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      # ── Step 3: Install dependencies ──────────────────────
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    # 4. Mengeksekusi skrip bot saham dengan menyuntikkan GitHub Secrets sebagai Environment Variables
-    - name: Run Stock Bot AI
-      env:
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      run: python bot_saham.py
+      # ── Step 4: Jalankan bot (secrets di-inject sebagai env) ─
+      - name: Run AI Stock Bot
+        env:
+          TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY:   ${{ secrets.GEMINI_API_KEY }}
+        run: python bot_saham.py
